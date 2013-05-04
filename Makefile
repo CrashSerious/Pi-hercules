@@ -112,8 +112,8 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-build_triplet = armv6l-unknown-linux-gnu
-host_triplet = armv6l-unknown-linux-gnu
+build_triplet = armv6-unknown-linux-gnu
+host_triplet = armv6-unknown-linux-gnu
 bin_PROGRAMS = hercules$(EXEEXT) dasdinit$(EXEEXT) dasdisup$(EXEEXT) \
 	dasdload$(EXEEXT) dasdconv$(EXEEXT) dasdls$(EXEEXT) \
 	dasdcat$(EXEEXT) dasdpdsu$(EXEEXT) dasdseq$(EXEEXT) \
@@ -486,7 +486,7 @@ BUILD_SHARED_FALSE = #
 BUILD_SHARED_TRUE = 
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS =  -W -Wall -O3 -mcpu=armv6l -mtune=armv6l -frename-registers
+CFLAGS =  -W -Wall -O3 -frename-registers
 CONVENIENCE_LTDL_FALSE = 
 CONVENIENCE_LTDL_TRUE = #
 CPP = gcc -E
@@ -575,9 +575,9 @@ am__quote =
 am__tar = ${AMTAR} chof - "$$tardir"
 am__untar = ${AMTAR} xf -
 bindir = ${exec_prefix}/bin
-build = armv6l-unknown-linux-gnu
+build = armv6-unknown-linux-gnu
 build_alias = 
-build_cpu = armv6l
+build_cpu = arm6
 build_os = linux-gnu
 build_vendor = unknown
 datadir = ${datarootdir}
@@ -585,9 +585,9 @@ datarootdir = ${prefix}/share
 docdir = ${datarootdir}/doc/${PACKAGE}
 dvidir = ${docdir}
 exec_prefix = ${prefix}
-host = armv6l-unknown-linux-gnu
+host = arm6-unknown-linux-gnu
 host_alias = 
-host_cpu = armv6l
+host_cpu = arm6
 host_os = linux-gnu
 host_vendor = unknown
 htmldir = ${docdir}
