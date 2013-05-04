@@ -1,0 +1,118 @@
+/////////////////////////////////////////////////////////////////////////////////////////
+// HercVer.rc  --  defines the Windows resources to be linked into the product
+//                 (c) Copyright "Fish" (David B. Trout), 2009
+//                 Released under the Q Public License as modifications to Hercules.
+//                 (http://www.hercules-390.org/herclic.html)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+// $Id: hercver.rc 5604 2010-02-05 14:07:42Z jmaynard $
+//
+// $Log$
+// Revision 1.7  2008/05/17 13:45:07  ivan
+// Update (c) info in hercver.rc
+//
+// Revision 1.6  2007/11/30 14:54:32  jmaynard
+// Changed conmicro.cx to hercules-390.org or conmicro.com, as needed.
+//
+// Revision 1.5  2006/12/08 09:55:11  jj
+// Add CVS message log
+//
+
+#ifdef APSTUDIO_INVOKED
+  #error This file is not editable by Microsoft Visual C++
+#endif
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+001 ICON DISCARDABLE "hercules.ico"
+/////////////////////////////////////////////////////////////////////////////////////////
+
+#include <winver.h>
+
+#ifndef NONE
+#define NONE 0x0L
+#endif
+
+#define HERCULES_PRODUCT          "The Hercules System/370, ESA/390, and z/Architecture Emulator"
+#define HERCULES_COPYRIGHT        "(c)Copyright 1999-2010"
+#define HERCULES_COMPANY          "by Roger Bowler, Jan Jaeger, and others"
+#define HERCULES_PRODUCT_URL      "http://www.hercules-390.org"
+#define HERCULES_PRODUCT_EMAIL    "hercules-390@yahoogroups.com"
+
+#if defined(PRERELEASE)
+#define ISPRERELEASE VS_FF_PRERELEASE
+#else
+#define ISPRERELEASE NONE
+#endif
+
+#if !defined(VERSION) || !defined(V1) || !defined(V2) || !defined(V3) || !defined(V4)
+  #error VERSION not defined properly
+#endif
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+1 VERSIONINFO
+
+FILEVERSION     V1, V2, V3, V4
+PRODUCTVERSION  V1, V2, V3, V4
+
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_UNKNOWN
+#if defined(DEBUG) || defined(_DEBUG)
+FILEFLAGS       ISPRERELEASE | VS_FF_SPECIALBUILD | VS_FF_DEBUG
+#else
+FILEFLAGS       ISPRERELEASE | VS_FF_SPECIALBUILD
+#endif
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+
+{
+  BLOCK "StringFileInfo"
+  {
+    BLOCK "040904B0"    // 0x0409 (1033) == U.S. English, 0x04B0 (1200) == UNICODE
+    {
+
+      // Standard/Required Attributes...
+
+      VALUE "ProductName",      HERCULES_PRODUCT        "\0"
+      VALUE "ProductVersion",   VERSION                 "\0"
+      VALUE "FileDescription",  HERCULES_PRODUCT        "\0"
+      VALUE "FileVersion",      VERSION                 "\0"
+      VALUE "CompanyName",      HERCULES_COMPANY        "\0"
+      VALUE "LegalCopyright",   HERCULES_COPYRIGHT " " HERCULES_COMPANY "\0"
+
+      // Custom Attributes...
+
+      VALUE "Hercules URL",     HERCULES_PRODUCT_URL    "\0"
+      VALUE "Hercules Email",   HERCULES_PRODUCT_EMAIL  "\0"
+      VALUE "Hercules Version", VERSION                 "\0"
+
+#if defined(PRERELEASE)
+#define PRE "PRERELEASE "
+#else
+#define PRE
+#endif
+
+#if defined(_WIN64)
+#define ARCH "64-bit "
+#else
+#define ARCH "32-bit "
+#endif
+
+#if defined(_DEBUG) || defined(DEBUG)
+#define CFG "DEBUG "
+#else
+#define CFG "RETAIL "
+#endif
+
+      VALUE "SpecialBuild",    PRE ARCH CFG "version"  "\0"
+
+    }
+  }
+  BLOCK "VarFileInfo"
+  {
+    VALUE "Translation", 0x409, 1200    // 0x409 (1033) == U.S. English, 1200 (0x4B0) == UNICODE
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,24 @@
+# ***************************************************************************
+#     PCRE_FLAGS.msvc      (!INCLUDE ed by "makefile-dllmod.msvc")
+# --------------------------------------------------------------------------
+# (c) Copyright Roger Bowler, 2005-2007
+# --------------------------------------------------------------------------
+# $Id: PCRE_FLAGS.msvc 4884 2008-10-11 23:46:01Z fish $
+#
+#  Sets PCRE-related compiler/linker flags & #defines...
+#
+#
+#                           CHANGE HISTORY
+# $Log$
+#
+# DD/MM/YY Description
+#
+# 26/12/06 Fish: created by extraction from existing makefile-dllmod.msvc
+#
+# ***************************************************************************
+
+!IFDEF PCRE_DIR
+LIBS   = $(LIBS) "$(PCRE_LIBPATH1)"
+LIBS   = $(LIBS) "$(PCRE_LIBPATH2)"
+cflags = $(cflags) /D HAVE_PCRE /I"$(PCRE_INCDIR)" /D PCRE_INCNAME=\"$(PCRE_INCNAME)\"
+!ENDIF

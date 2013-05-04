@@ -1,0 +1,347 @@
+-------------------------------------------------------------------------------
+
+
+                     Version 3.06 RELEASE NOTES
+
+
+* Tape "AUTOMOUNT" support
+
+  Starting with Hercules version 3.06 a new AUTOMOUNT option is available
+  that allows guest operating systems to directly mount, unmount and query
+  tape device filenames for themselves, without any intervention on the
+  part of the Hercules operator.
+
+  Automount support is enabled via the AUTOMOUNT configuration file statement.
+
+  An example guest automount program for VSE called "TMOUNT" is provided in
+  the util subdirectory of the Hercules source code distribution.
+
+  Briefly, the 0x4B (Set Diagnose) CCW is used to mount (or unmount) a file
+  onto a tape drive, and the 0xE4 (Sense Id) CCW opcode is used to query the
+  name of the currently mounted file.
+
+  For mounts, the 0x4B CCW specifies the filename of the file to be mounted
+  onto the drive. The file MUST reside in the specified AUTOMOUNT directory
+  or the automount request will be rejected. To unmount the currently mounted
+  file, simply do a mount of the special filename "OFFLINE".
+
+  To query the name of the currently mounted file, the 0xE4 CCW is used. Note
+  however that the 0xE4 (Sense Id) CCW opcode cannot be used by itself since
+  the drive may also already natively support the Sense Id CCW opcode. Instead,
+  it must be preceded by (command-chained from) a 0x4B CCW with a data transfer
+  length of one byte. The following 0xE4 command is the one that then specifies
+  the i/o buffer and buffer length of where the query function is to place the
+  device's currently mounted host filename.
+
+  In summary:
+
+
+      MOUNT:      X'4B', <filename>, X'20', <length>
+
+      UNMOUNT:    (same thing but use filename "OFFLINE" instead)
+
+      QUERY:      X'4B', <buffer>, X'60', 1
+                  X'E4', <buffer>, X'20', <buffersize>
+
+
+  Again please refer to the provided TMOUNT program for a simple example
+  of how automount support might be implmented on a guest operating system.
+
+-------------------------------------------------------------------------------
+
+
+                     Version 3.05 RELEASE NOTES
+
+
+* The 'conspawn' utility used to process 'sh' commands now recognizes a
+  specially designed keyword "startgui" to accomodate automatic starting
+  of Windows GUI applications via the .RC file or panel command-line.
+
+  If the first word following 'sh' is "startgui", then the "ShellExecute"
+  API is used to start the requested program rather than the 'system()'
+  API as otherwise. This is to address an issue related to running Hercules
+  via the HercGUI graphical front end wherein programs started via the .RC
+  file would cause HercGUI to hang at PowerOff until all programs started
+  by Hercules (via the .RC file or panel command-line) were first closed.
+
+  If the program you wish to invoke via the 'sh' command is a command-line
+  program (that thus uses stdio to read from stdin and write to stdout)
+  then "startgui" should NOT be used. Instead, simply start the program
+  as before (e.g. "sh cmd /c myprog myargs...").
+
+  If the application you wish to start is a normal Windows GUI application
+  however, then the "startgui" keyword should be used instead. For example,
+  to automatically start the Vista 3270 terminal emulator from your .RC file,
+  use: "sh  startgui  D:\Vista32\Vista32.exe  Hercules.ses".
+
+  Again, this is only for starting Windows GUI programs and thus does not
+  impact non-GUI (command-line) programs nor, obviously, non-MSVC builds
+  of Hercules nor when Hercules is run via the command-line (in non-GUI mode).
+  This is only for the Window MSVC build of Hercules and only when Hercules
+  is started via HercGUI and only when starting a Windows GUI program via
+  the 'sh' command either via the panel command-line or the .RC file. (Note:
+  the panel command-line also includes commands entered via the http server
+  interface as well)
+
+
+* Real SCSI tape drives used with Hercules must provide a certain minimum set
+  is "IBM compatible" support in their SCSI command set/behavior in order to
+  work properly with Hercules. Furthermore, the Hercules device-type used on
+  your device statement in your Hercules configuration file should match the
+  the level of support/behavior that they provide.
+
+  For example, all SCSI tape drives used with Hercules must provide the ability
+  to set variable-length blocks as well as long erase-gaps (long erase-gaps
+  allows new data to be appended to the end of existing data without having to
+  write a tape-mark to separate the new data from the old existing data first).
+
+  Another example would be using a model of SCSI tape drive that happens to
+  report physical block-id values in a format different from the way real IBM
+  mainframe tape drives report them. 3480/3490 tape drives for example report
+  their block-ids (used in Read Block Id and Locate CCWs) in a very specific
+  format wherein bits 1-7 of the high-order byte of the reported 4-byte block-
+  id indicates the tape's physical "segment" location of where the lower 22-
+  bit block number is physically located on the tape. (The block-id segment
+  is used to allow the tape drive to quickly position itself to the approximate
+  location where the desired block acually resides on the tape and thus allows
+  high-speed positioning for the Locate CCW).
+
+  If the model of SCSI tape drive you are actually using with Hercules does not
+  use this same block-id format however, then it cannot be used with Hercules
+  as a 3480 or 3490 model tape drive with specially defined options.
+
+  If the SCSI tape drive you are using reports its block-ids using a 32-bit
+  block-id value (the same way a 3590 model tape drive does), then similarly,
+  it should be defined to Hercules as a model 3590 device-type as well (since
+  that is how it is behaving with respect the format of the returned blockid
+  values). It you wish to define it in Hercules as a model 3480 or 3490, then
+  you will need to use specially defined options before it will work properly
+  as the model drive you wish it to emulate.
+
+  With all that being said, it should be noted that PARTIAL support for 3590
+  device emulation is possible with judicious use the aforementioned special
+  options, but full/complete 3590 support is unlikely due to lack of publicly
+  available documentation. Details regarding 3590 CCW handling is restricted 
+  (confidential) IBM proprietary information, and is not normally available
+  outside of IBM. Not long ago IBM was required by US law to publish such
+  information, but unfortunately for Hercules, such is no longer the case.
+
+  For further information regarding use of SCSI attached tape drives with
+  Hercules and their associated specially defined options, please refer to
+  the section on SCSI tape drives in the Hercules's Device Configuration
+  documentation.
+
+
+* In order to ensure proper functioning of the TOD clock with older versions
+  of guest operating systems, the default values of Hercules's internal thread
+  priorities for the Windows version of Hercules were changed to be identical
+  to those used by all other supported platforms. Originally, the default
+  thread priority values for the Windows version of Hercules were:
+
+            ***  3.04 (and prior) Default Priorities  ***
+
+            Thread    Priority           Meaning
+            -------   --------   ------------------------
+            HERCPRIO     0        Normal Process priority
+
+            DEVPRIO     -8        Above Normal  Thread priority
+            TODPRIO      0        Normal        Thread priority
+            CPUPRIO      0        Normal        Thread priority
+
+  which caused acceptable performance/functioning on most, but not all, guest
+  operating systems. Beginning with version 3.05 however, the prioriries now
+  default to:
+
+            ***  3.05 (and later) Default  Priorities  ***
+
+            Thread    Priority           Meaning
+            -------   --------   ------------------------
+            HERCPRIO     0        Normal Process priority
+
+            TODPRIO    -20        Time Critical  Thread priority
+            DEVPRIO      8        Below Normal   Thread priority
+            CPUPRIO     15        Lowest         Thread priority
+
+  which may on more modern guest operating systems (which handle the TOD clock
+  differently than do older less sophticated versions) cause a slight decrease
+  in overall performance. If such is the case, the original default priorities
+  (and thus the original behavior) can be obtained via addition of appropriate
+  HERCPRIO, TODPRIO, DEVPRIO and CPUPRIO control file statements with values
+  identical to the original version 3.04 default values.
+
+
+* Additional configuration file usability enhancements have been implemented
+  in the form of a new 'INCLUDE' (and associated 'IGNORE') statement, allowing
+  configuration files to "include" statements from a different named file.
+
+  Additonally, a new "enhanced" symbolic substitution syntax is now also
+  supported. Refer to the Hercules "Configuration File" documentation for
+  further information and details.
+
+  A rather nifty "Automatic Operator" facility has also been implemented in
+  the current release as well. While not exactly a "configuration file
+  usability enhancement", it is nevertheless something we hope might prove
+  to be more useful/helpful to our many users. See the "README.HAO" document
+  for more information.
+
+-------------------------------------------------------------------------------
+
+
+                     Version 3.01 RELEASE NOTES
+
+
+- Support for z990 crypto instructions is conditional on the presence of the
+  glibcrypt library.
+
+  If Hercules is BUILT, the development files for glibcrypt should be available.
+
+  When hercules is RUN, the runtime files for glibcrypt should be installed.
+
+  Depending on the level of glibcrypt used to *build* hercules, the associated
+  level of glibcrypt should also be present on the target machine. On systems
+  supporting shared library versioning, multiple levels of the glibcrypt
+  runtime libraries can be installed simultaneously, ensuring availability
+  of the z990 crypto instructions, regardless of the level of glibcrypt with
+  which hercules was initially built.
+
+
+- CTC and LCS devices now ++MUST++ specify ALL addresses on the configuration
+  statement.
+
+  Example:
+
+    0A00.2     LCS .....
+    0B00.2     CTCI ....
+
+     or
+
+    0A00.4     LCS -oat hercules.oat
+
+     or
+
+    0A00-0A03  LCS -oat hercules.oat
+
+     or
+
+    0A00    LCS -oat hercules.oat
+    0A01    LCS
+    0A02    LCS
+    0A03    LCS
+
+  Previously (i.e. with version 3.00), only the first (even numbered) device
+  needed to be defined and Herc would automatically define the odd numbered
+  device for you. Starting with Hercules version 3.01 however, you now need
+  to define BOTH devices, just like you did with versions prior to 3.00.
+
+  Once again, starting with version 3.01, you **MUST** define BOTH DEVICES.
+
+-------------------------------------------------------------------------------
+
+
+                     Version 3.00 RELEASE NOTES
+
+
+- Reminder that CTCI device handling was changed as follows:
+
+  - The CTCI-W32 protocol is deprecated. You should use the CTCI protocol
+    instead.
+
+  - You MUST NOT define both even/odd CTCI device pairs in your configuration
+    file. You should ONLY define the first even numbered device. Hercules will
+    automatically define the odd numbered device for you. If you define the
+    odd numbered device by mistake, an open error will occur on that device.
+    This is by design. See the README.NETWORKING document for further details.
+
+
+- Hercules Dynamic Loader support: starting with version 3.00, Hercules now
+  contains support for the dynamic loading of certain modules upon startup on
+  some platforms (e.g. Linux and Windows for example). As a result of this new
+  feature, "Hercules" itself now no longer consists of just the 'hercules.exe'
+  module by itself, but rather consists of BOTH the 'hercules.exe' program AS
+  WELL AS whatever dynamic modules (DLLs) that accompany it.
+
+  As a result if this change, whenever you install a new version of Hercules,
+  you must ensure that you ALSO install the accompanying new versions of the
+  new dynamic modules as well. Attempting to use a version of Hercules with a
+  dynamic module that was not specifically built for that version will cause
+  loading of that dynamic module to fail.
+
+  You CANNOT mix versions of Hercules with differing versions of dynamically
+  loaded modules.
+
+  Ensure that your library path LD_LIBRARY_PATH is set correctly such that it
+  includes the directory of your Hercules executables. Especially, message
+  HHCCF042E will indicate that system is unable to locate necessary loadable
+  modules.
+
+
+- ECPS:VM: Do not use ECPS:VM (See README.ECPSVM) in an AP or MP environment
+  in VM/370. If AP=YES or MP=YES is coded in DMKSYS and the AP/MP control
+  file is used to build the CP nucleus and NUMCPU is set to more than 1 in
+  the hercules.cnf file, any of LOK001, LOK003 or other abends will occur.
+  This occurs because the Hercules ECPS:VM CP Assist implementation is not
+  MP safe, and particularily, attemps VM dispatching without holding necessary
+  AP or MP locks.
+
+
+- Due to the change in Hercules' "mainstor" memory allocation technique to
+  address a "double memory consumption" bug in Cygwin's malloc implementation,
+  some Windows Hercules users may experience an "out of memory" error whenever
+  Hercules is started with a large MAINSIZE configuration file value:
+
+      "HHCCF031S Cannot obtain nnnMB main storage"
+
+  This error will most likely occur (if it does at all) for those users who
+  have manually adjusted their Cygwin "heap_chunk_in_mb" Windows registry
+  setting value (in order to allow them to specify a large MAINSIZE value
+  when running Hercules). If this problem does occur (i.e. if you DO happen
+  to experience the above mentioned "HHCCF031S Cannot obtain main storage"
+  error with this new release of Hercules), then either REDUCE your "heap_
+  chunk_in_mb" value (yes, that's correct: REDUCE it; i.e. change it to a
+  SMALLER value) or else remove it altogether (so as to let it default).
+
+  Detailed explanation:
+
+  History/background: Cygwin has a built-in limit to the amount of memory
+  that may be allocated in one chunk. If you try 'malloc'ing more than this
+  limit, you will receive an "out of memory" error. Since many Hercules users
+  specify large MAINSIZE values in their configuration file, they sometimes
+  experience this problem.
+
+  The suggested workaround to this "problem" was to add a "heap_chunk_in_mb"
+  registry value to Cygwin's registry settings with a large enough value such
+  that Cygwin would then be able to satisfy Hercules' 'malloc' request for
+  such a large MAINSIZE value.
+
+  This worked fine until sometime around version 1.3.15 of Cygwin, at which
+  time they began using a different 'malloc' technique that unfortunately
+  causes TWICE as much Windows virtual memory to be allocated for any large
+  memory allocation (the technical reasons of which are explained in comments
+  in source member config.c where mainsize is being allocated).
+
+  In order to address this double memory allocation issue in Cygwin's malloc
+  implementation, Hercules was changed to use mmap to allocate its mainstor
+  rather than malloc (which, unlike malloc, does NOT inadvertently allocate
+  twice as Windows virtual storage than was requested), which did indeed re-
+  solve the "double memory allocation" problem.
+
+  Unfortunately however, because Cygwin's malloc and mmap logic each consume
+  completely different portions of Windows' virtual memory, the more memory
+  that is reserved for malloc usage (via using a larger "heap_chunk_in_mb"
+  value), the LESS becomes available for mmap usage!
+
+  Thus, while increasing your "heap_chunk_in_mb" registry value USED to HELP
+  [to allow you to allocate larger amounts of mainstor (MAINSIZE)], it NOW
+  causes the complete OPPOSITE effect: it ends up PREVENTING you from being
+  able to 'mmap' as much storage as you'd like to have!
+
+  Conclusion:
+
+  Therefore, if you are currently using the "heap_chunk_in_mb" registry value
+  setting to allow you to allocate large MAINSIZE values, then starting with
+  version 3.00 of Hercules you need to DESCREASE your "heap_chunk_in_mb" value
+  (or remove it altogether and let it default) in order to leave enough memory
+  remaining for Hercules (Cygwin actually) to be able to satisfy its 'mmap'
+  request for your desired MAINSIZE amount.
+  
+-------------------------------------------------------------------------------
